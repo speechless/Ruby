@@ -35,7 +35,6 @@ std::string _HTTP_BUFFER, _HTTP_MESSAGE;
  *	@return 2: failure <fatal>, content length not found
  *	@return 3: failure, message body not complete
  */
-
 int ParseConnection (std::string packet, std::string &message, std::string &buffer)
 {
 	buffer.append(packet);
@@ -100,7 +99,8 @@ namespace HTTPlib {
 	 *	@return 0: success
 	 *	@return 1: failure
 	 */
-	int GetPath (std::string message, std::string& path) {
+	int GetPath (std::string message, std::string& path)
+	{
 		int position = message.find("/");
 		if (position == std::string::npos) {
 			return 1;
@@ -150,7 +150,8 @@ namespace HTTPlib {
 	 *
 	 */
 	template <class DataType>
-	int GetValue (std::string message, std::string field, DataType &value) {
+	int GetValue (std::string message, std::string field, DataType &value)
+	{
 		int location = message.find(field + "=");
 		
 		if (location == std::string::npos) {
