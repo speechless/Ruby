@@ -6,10 +6,11 @@
 
 #include <stdlib.h> 
 #include <string>
+#include <sstream> // Testing HTTPlib::GetValue() template abilities
 
 std::string _HTTP_BUFFER, _HTTP_MESSAGE;
 
-/*	ParseConnection(std::string packet, std::string &message, std::string &buffer)
+/*	ParseConnection (std::string packet, std::string &message, std::string &buffer)
  *
  *	Description: Parses several broken HTTP packets into single complete messages.
  *
@@ -35,7 +36,7 @@ std::string _HTTP_BUFFER, _HTTP_MESSAGE;
  *	@return 3: failure, message body not complete
  */
 
-int ParseConnection(std::string packet, std::string &message, std::string &buffer)
+int ParseConnection (std::string packet, std::string &message, std::string &buffer)
 {
 	buffer.append(packet);
 
@@ -84,18 +85,119 @@ int ParseConnection(std::string packet, std::string &message, std::string &buffe
 	return 0;
 }
 
+/*	HTTPlib namespace
+ *	
+ *	Description: library of core HTTP serializers and parsers
+ */
+namespace HTTPlib {
+	/*	GetPath(std::string message, std::string& path)
+	 *
+	 *	Description: Extracts path from HTTP header
+	 *
+	 *	@message[in]: HTTP packet to search
+	 *	@path[out]: path extracted from HTTP path
+	 *
+	 *	@return 0: success
+	 *	@return 1: failure
+	 */
+	int GetPath (std::string message, std::string& path) {
+		int position = message.find("/");
+		if (position == std::string::npos) {
+			return 1;
+		}
+		
+		int length = message.find(" ", position+1);
+		if (position == std::string::npos) {
+			return 1;
+		}
+
+		path = message.substr(position, length-position);
+		return 0;
+	}
+
+	/*	GetValue (std::string message, std::string field, Type &value)
+	 *
+	 *	Description: Extracts targeted value from HTTP post requests
+	 *
+	 *	Example: name=Cosby&age=21&city=New%20York
+	 *	Usage:
+	 *		
+	 *		int valueAge, Result;
+	 *		std::string valueName, valueCity;
+	 *
+	 *		Result = GetValue <int> (networkPacket, "name", valueName);
+	 *		if (Result != 0) {
+	 *			// error
+	 *		}
+	 *
+	 *		Result = GetValue (networkPacket, "city", valueCity);
+	 *		if (Result != 0) {
+	 *			// error
+	 *		}
+	 *
+	 *		Result = GetValue <std::string> (networkPacket, "name", valueName);
+	 *		if (Result != 0) {
+	 *			// error
+	 *		}
+	 *
+	 *	@message[in]: HTTP packet to search
+	 *	@field[in]: Field to search for
+	 *	@DataType[in]: Data type of value to be obtained (optional)
+	 *	@field[out]: Value assigned to field
+	 *
+	 *	@return 0: success
+	 *	@return 1: failure
+	 *
+	 */
+	template <class DataType>
+	int GetValue (std::string message, std::string field, DataType &value) {
+		int location = message.find(field + "=");
+		
+		if (location == std::string::npos) {
+			return 1;
+		}
+		
+		location += std::string(field + "=").length();
+		
+		int length = message.find("&", location+1);
+			
+		std::string buffer = message.substr(location, length-location); 
+		std::stringstream ss;
+		ss << buffer;
+		ss >> value;
+		ss.clear();
+
+		return 0;
+	}
+}
+
 int main (int argc, char *argv[])
 {
-	ParseConnection("POST 200 OK\r\n", _HTTP_MESSAGE, _HTTP_BUFFER);
+	// ParseConnection() test
+	ParseConnection("POST /path/file.html HTTP/1.1\r\n", _HTTP_MESSAGE, _HTTP_BUFFER);
 	ParseConnection("Content-Type: text/html\r\n", _HTTP_MESSAGE, _HTTP_BUFFER);
-	ParseConnection("Content-Length: 32\r\n", _HTTP_MESSAGE, _HTTP_BUFFER);
-	ParseConnection("\r\nhome=Cosby&favorite+flavor=flies", _HTTP_MESSAGE, _HTTP_BUFFER);
+	ParseConnection("Content-Length: 39\r\n", _HTTP_MESSAGE, _HTTP_BUFFER);
+	ParseConnection("\r\nname=Cosby&age=21&favorite+flavor=flies", _HTTP_MESSAGE, _HTTP_BUFFER);
 	ParseConnection("GET 200 OK\r\n", _HTTP_MESSAGE, _HTTP_BUFFER);
 
 	std::cout << ">> Message <<" << std::endl;
-	std::cout << _HTTP_MESSAGE << std::endl;
+	std::cout << _HTTP_MESSAGE << std::endl << std::endl;
 	std::cout << ">> Buffer <<" << std::endl;
-	std::cout << _HTTP_BUFFER << std::endl;
+	std::cout << _HTTP_BUFFER << std::endl << std::endl;
+
+	// GetPath() test
+	std::cout << ">> Path <<" << std::endl;
+	std::string path;
+	HTTPlib::GetPath(_HTTP_MESSAGE, path);
+	std::cout << path << std::endl << std::endl;
+
+	// GetValue() test
+	std::cout << ">> Value <<" << std::endl;
+	std::string valueName;
+	HTTPlib::GetValue <std::string> (_HTTP_MESSAGE,"name",valueName);
+	int valueAge;
+	HTTPlib::GetValue <int> (_HTTP_MESSAGE,"age",valueAge);
+	std::cout << "name:" << valueName << std::endl << "age:" << valueAge << std::endl << std::endl;
 
 	return 0;
 }
