@@ -170,6 +170,35 @@ namespace HTTPlib {
 
 		return 0;
 	}
+
+	/*	CreateHTTPPacket (std::string responseCode,	std::string humanReadable,
+	 *		std::string contentType, std::string httpBody, std::string &httpPacket)
+	 *
+	 *	Description: Creates HTTP packet
+	 *
+	 *	@responseCode[in]: a response status code that gives the result of the request
+	 *	@humanReadable[in]: an English reason phrase describing the status code
+	 *	@contentType[in]: MIME-type of the data in the body
+	 *	@httpBody[in]: http body to be sent as payload
+	 *	@httpPacket[out]: http packet to be sent to client
+	 *
+	 *	@return 0: success
+	 */
+	int CreateHTTPPacket (std::string responseCode,	std::string humanReadable,
+		std::string contentType, std::string httpBody, std::string &httpPacket)
+	{
+		std::string buffer;
+		std::stringstream ss;
+		ss << httpBody.length();
+		ss >> buffer;
+
+		httpPacket =
+			"HTTP/1.1 " + responseCode + " " + humanReadable + "\r\n"
+			"Content-Type: " + contentType + "\r\n"
+			"Content-Length: " + buffer + "\r\n\r\n" + httpBody;
+
+		return 0;
+	}
 }
 
 int main (int argc, char *argv[])
@@ -199,6 +228,28 @@ int main (int argc, char *argv[])
 	int valueAge;
 	HTTPlib::GetValue <int> (_HTTP_MESSAGE,"age",valueAge);
 	std::cout << "name:" << valueName << std::endl << "age:" << valueAge << std::endl << std::endl;
+
+	// CreateHTTPPacket() test
+	std::string httpPacket;
+	std::string webpage =
+		"<!doctype HTML>"
+		"<html>"
+		"<head>"
+			"<title>Login Page</title>"
+		"</head>"
+		"<body>"	
+			"<form action=\"login_form\" method=\"post\">"
+			"Username: <input type=\"text\" name=\"username\"><br>"
+			"Password: <input type=\"password\" name=\"password\"><br>"
+			" <input type=\"submit\" value=\"Submit\">"
+			"</form>"
+		"</body>"
+		"</html>";
+
+	HTTPlib::CreateHTTPPacket("200","OK","text/html",webpage, httpPacket);
+
+	std::cout << ">> HTTP Packet <<" << std::endl;
+	std::cout << httpPacket << std::endl;
 
 	return 0;
 }
