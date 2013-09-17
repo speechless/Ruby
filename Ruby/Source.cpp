@@ -147,7 +147,6 @@ namespace HTTPlib {
 	 *
 	 *	@return 0: success
 	 *	@return 1: failure
-	 *
 	 */
 	template <class DataType>
 	int GetValue (std::string message, std::string field, DataType &value)
