@@ -89,6 +89,37 @@ int ParseConnection (std::string packet, std::string &message, std::string &buff
  *	Description: library of core HTTP serializers and parsers
  */
 namespace HTTPlib {
+	/*	REQUEST
+	 *
+	 *	Description: enumeration used for HTTP requests
+	 *
+	 *	Note: ERROR is NOT a http request type, it is used for indicating a functional error.
+	 */
+	enum REQUEST {
+		GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, CONNECT, PATCH, ERROR
+	};
+
+	/*	GetRequestType (std::string message)
+	 *
+	 *	Description: Returns the type of request in the "message"
+	 *
+	 *	@message[in]: HTTP packet to search
+	 *
+	 *	@return int/enum: type of request found
+	 */
+	REQUEST GetRequestType (std::string message)
+	{
+		if (message.find("GET") == 0) {
+			return REQUEST::GET;
+		}
+
+		if (message.find("POST") == 0) {
+			return REQUEST::POST;
+		}
+		
+		return ERROR;
+	}
+
 	/*	GetPath(std::string message, std::string& path)
 	 *
 	 *	Description: Extracts path from HTTP header
@@ -213,6 +244,17 @@ int main (int argc, char *argv[])
 	std::cout << _HTTP_MESSAGE << std::endl << std::endl;
 	std::cout << ">> Buffer <<" << std::endl;
 	std::cout << _HTTP_BUFFER << std::endl << std::endl;
+
+	//  GetRequestType() test
+	int request = HTTPlib::GetRequestType(_HTTP_MESSAGE);
+	std::cout << ">> Request <<" << std::endl;
+	if (request == HTTPlib::REQUEST::GET) {
+		std::cout << "Type: GET" << std::endl;
+	}
+	if (request == HTTPlib::REQUEST::POST) {
+		std::cout << "Type: POST" << std::endl;
+	}
+	std::cout << std::endl;
 
 	// GetPath() test
 	std::cout << ">> Path <<" << std::endl;
